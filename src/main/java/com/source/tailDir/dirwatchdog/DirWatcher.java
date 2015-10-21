@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,7 @@ import java.util.*;
 public class DirWatcher {
     static final Logger LOG = LoggerFactory.getLogger(DirWatcher.class);
 
-    final private List<DirChangeHandler> list = Collections
-            .synchronizedList(new ArrayList<DirChangeHandler>());
+    final private List<DirChangeHandler> list = Collections.synchronizedList(new ArrayList<DirChangeHandler>());
     private File dir;
     private volatile boolean done = false;
     private Set<File> previous = new HashSet<File>();
@@ -89,30 +88,6 @@ public class DirWatcher {
         } // waiting for thread to complete.
         LOG.info("Stopped dir watcher thread");
         thread = null;
-    }
-
-    /**
-     * This thread periodically checks a directory for updates
-     */
-    class Periodic extends Thread {
-        Periodic() {
-            super("DirWatcher");
-        }
-
-        public void run() {
-            try {
-                while (!done) {
-                    try {
-                        check();
-                        Thread.sleep(sleep_ms);
-                    } catch (NumberFormatException nfe) {
-                        LOG.warn("wtf ", nfe);
-                    }
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     /**
@@ -189,6 +164,30 @@ public class DirWatcher {
         DirChangeHandler[] hs = list.toArray(new DirChangeHandler[0]);
         for (DirChangeHandler h : hs) {
             h.fileDeleted(f);
+        }
+    }
+
+    /**
+     * This thread periodically checks a directory for updates
+     */
+    class Periodic extends Thread {
+        Periodic() {
+            super("DirWatcher");
+        }
+
+        public void run() {
+            try {
+                while (!done) {
+                    try {
+                        check();
+                        Thread.sleep(sleep_ms);
+                    } catch (NumberFormatException nfe) {
+                        LOG.warn("wtf ", nfe);
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

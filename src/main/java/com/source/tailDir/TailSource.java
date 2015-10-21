@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,13 +70,11 @@ public class TailSource {
     private static final Logger LOG = LoggerFactory.getLogger(TailSource.class);
 
     private static int thdCount = 0;
-    private volatile boolean done = false;
-
-    private final long sleepTime; // millis
     final List<Cursor> cursors = new ArrayList<Cursor>();
+    private final long sleepTime; // millis
     private final List<Cursor> newCursors = new ArrayList<Cursor>();
     private final List<Cursor> rmCursors = new ArrayList<Cursor>();
-
+    private volatile boolean done = false;
     private TailThread thd = null;
 
     /**
@@ -85,60 +83,6 @@ public class TailSource {
      */
     public TailSource(long waitTime) {
         this.sleepTime = waitTime;
-    }
-
-    /**
-     * This is the main driver thread that runs through the file cursor list
-     * checking for updates and sleeping if there are none.
-     */
-    class TailThread extends Thread {
-
-        TailThread() {
-            super("TailThread-" + thdCount++);
-        }
-
-        @Override
-        public void run() {
-            try {
-                // initialize based on initial settings.
-                for (Cursor c : cursors) {
-                    c.initCursorPos();
-                }
-
-                while (!done) {
-                    synchronized (newCursors) {
-                        cursors.addAll(newCursors);
-                        newCursors.clear();
-                    }
-
-                    synchronized (rmCursors) {
-                        cursors.removeAll(rmCursors);
-                        for (Cursor c : rmCursors) {
-                            c.flush();
-                        }
-                        rmCursors.clear();
-                    }
-
-                    boolean madeProgress = false;
-                    for (Cursor c : cursors) {
-                        LOG.debug("Progress loop: " + c.file);
-                        if (c.tailBody()) {
-                            madeProgress = true;
-                        }
-                    }
-
-                    if (!madeProgress) {
-                        Thread.sleep(sleepTime);
-                    }
-                }
-                LOG.debug("Tail got done flag");
-            } catch (InterruptedException e) {
-                LOG.error("Tail thread nterrupted: " + e.getMessage(), e);
-            } finally {
-                LOG.info("TailThread has exited");
-            }
-
-        }
     }
 
     /**
@@ -202,6 +146,60 @@ public class TailSource {
         }
         thd = new TailThread();
         thd.start();
+    }
+
+    /**
+     * This is the main driver thread that runs through the file cursor list
+     * checking for updates and sleeping if there are none.
+     */
+    class TailThread extends Thread {
+
+        TailThread() {
+            super("TailThread-" + thdCount++);
+        }
+
+        @Override
+        public void run() {
+            try {
+                // initialize based on initial settings.
+                for (Cursor c : cursors) {
+                    c.initCursorPos();
+                }
+
+                while (!done) {
+                    synchronized (newCursors) {
+                        cursors.addAll(newCursors);
+                        newCursors.clear();
+                    }
+
+                    synchronized (rmCursors) {
+                        cursors.removeAll(rmCursors);
+                        for (Cursor c : rmCursors) {
+                            c.flush();
+                        }
+                        rmCursors.clear();
+                    }
+
+                    boolean madeProgress = false;
+                    for (Cursor c : cursors) {
+                        LOG.debug("Progress loop: " + c.file);
+                        if (c.tailBody()) {
+                            madeProgress = true;
+                        }
+                    }
+
+                    if (!madeProgress) {
+                        Thread.sleep(sleepTime);
+                    }
+                }
+                LOG.debug("Tail got done flag");
+            } catch (InterruptedException e) {
+                LOG.error("Tail thread nterrupted: " + e.getMessage(), e);
+            } finally {
+                LOG.info("TailThread has exited");
+            }
+
+        }
     }
 
 

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,18 +39,15 @@ import java.util.Map;
  */
 public class TailDirSourceNG extends AbstractSource implements Configurable, EventDrivenSource {
     public static final Logger logger = LoggerFactory.getLogger(TailDirSourceNG.class);
+    public SourceCounter sourceCounter;
     private TailSource tail;
     private DirWatcher watcher;
     private volatile boolean dirChecked = false;
-
     private String monitorDirPath;
     private String fileEncode;
     private String fileRegex;
     private int batchSize;
     private boolean startFromEnd;
-
-    public SourceCounter sourceCounter;
-
     private String delimRegex;
     private String delimMode;
 
@@ -69,14 +66,11 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
         if (sourceCounter == null) {
             sourceCounter = new SourceCounter(getName());
         }
-
     }
 
     @Override
     public void start() {
-        Preconditions.checkState(watcher == null,
-                "Attempting to open an already open TailDirSource (" + monitorDirPath + ", \""
-                        + fileRegex + "\")");
+        Preconditions.checkState(watcher == null, "Attempting to open an already open TailDirSource (" + monitorDirPath + ", \"" + fileRegex + "\")");
         // 100 ms between checks
         this.tail = new TailSource(100);
         watcher = createWatcher(new File(monitorDirPath), fileRegex, this, sourceCounter);
@@ -116,8 +110,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 Cursor c;
                 if (delimRegex == null) {
                     if (startFromEnd && !dirChecked) {
-                        // init cursor positions on first dir check when startFromEnd is set
-                        // to true
+                        // init cursor positions on first dir check when startFromEnd is set to true
                         c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f
                                 .lastModified(), fileEncode, batchSize);
                     } else {
@@ -126,8 +119,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 } else {
                     // special delimiter modes
                     if (startFromEnd && !dirChecked) {
-                        // init cursor positions on first dir check when startFromEnd is set
-                        // to true
+                        // init cursor positions on first dir check when startFromEnd is set to true
                         c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, f.length(), f.length(), f.lastModified(), delimRegex, delimMode);
                     } else {
                         c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, delimRegex, delimMode);
@@ -150,8 +142,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 logger.debug("handling deletion of file " + f);
                 String fileName = f.getPath();
                 Cursor c = curmap.remove(fileName);
-                // this check may seem unneeded but there are cases which it handles,
-                // e.g. if unwatched subdirectory was removed c is null.
+                // this check may seem unneeded but there are cases which it handles, e.g. if unwatched subdirectory was removed c is null.
                 if (c != null) {
                     logger.info("removed file " + f);
                     tail.removeCursor(c);
@@ -160,8 +151,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
 
         });
 
-        // Separate check is needed to init cursor positions
-        // (to the end of the files in dir)
+        // Separate check is needed to init cursor positions (to the end of the files in dir)
         if (startFromEnd) {
             watcher.check();
         }

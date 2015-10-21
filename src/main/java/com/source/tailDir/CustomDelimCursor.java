@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,14 +40,6 @@ public class CustomDelimCursor extends Cursor {
     final Pattern pat;
     byte[] prefix = null; // only for include delimiter in next mode
 
-    /**
-     * Are deliminter sequences part of the previous, completed excluded or part
-     * of the next event record.
-     */
-    enum DelimMode {
-        INCLUDE_PREV, EXCLUDE, INCLUDE_NEXT
-    }
-
     CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, long lastReadOffset, long lastFileLen, long lastMod, String regex, String delimModeStr) {
         super(source, sourceCounter, f, lastReadOffset, lastFileLen, lastMod, charEncode, batchSize);
         this.pat = Pattern.compile(regex);
@@ -59,7 +51,6 @@ public class CustomDelimCursor extends Cursor {
         this.pat = Pattern.compile(regex);
         this.delimMode = extractDelim(delimModeStr);
     }
-
 
     private DelimMode extractDelim(String delimModeStr) {
         DelimMode delimMode = DelimMode.EXCLUDE; // default to exclude mode
@@ -73,44 +64,6 @@ public class CustomDelimCursor extends Cursor {
             }
         }
         return delimMode;
-    }
-
-
-    /**
-     * This is a cheat class to present a CharSequence interface backed by a
-     * byte[]/ByteBuffer. This allows us to use regexes against the byte[]. Note,
-     * we are puposely avoiding character encoding here.
-     */
-    public static class ByteBufferAsCharSequence implements CharSequence {
-        ByteBuffer buf;
-
-        ByteBufferAsCharSequence(ByteBuffer buf) {
-            this.buf = buf;
-        }
-
-        @Override
-        public char charAt(int arg0) {
-            return (char) buf.get(arg0);
-        }
-
-        @Override
-        public int length() {
-            return buf.remaining();
-        }
-
-        @Override
-        public CharSequence subSequence(int start, int end) {
-            if (start < 0 || end < 0 || end > length() || start > end) {
-                throw new IndexOutOfBoundsException("Index out of bounds start="
-                        + start + " end=" + end);
-            }
-            byte[] bs = new byte[end - start];
-            for (int i = start, j = 0; i < end; i++, j++) {
-                bs[j] = buf.get(i);
-            }
-
-            return new ByteBufferAsCharSequence(ByteBuffer.wrap(bs));
-        }
     }
 
     /**
@@ -261,6 +214,51 @@ public class CustomDelimCursor extends Cursor {
         }
         in = null;
         buf.clear();
+    }
+
+    /**
+     * Are deliminter sequences part of the previous, completed excluded or part
+     * of the next event record.
+     */
+    enum DelimMode {
+        INCLUDE_PREV, EXCLUDE, INCLUDE_NEXT
+    }
+
+    /**
+     * This is a cheat class to present a CharSequence interface backed by a
+     * byte[]/ByteBuffer. This allows us to use regexes against the byte[]. Note,
+     * we are puposely avoiding character encoding here.
+     */
+    public static class ByteBufferAsCharSequence implements CharSequence {
+        ByteBuffer buf;
+
+        ByteBufferAsCharSequence(ByteBuffer buf) {
+            this.buf = buf;
+        }
+
+        @Override
+        public char charAt(int arg0) {
+            return (char) buf.get(arg0);
+        }
+
+        @Override
+        public int length() {
+            return buf.remaining();
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            if (start < 0 || end < 0 || end > length() || start > end) {
+                throw new IndexOutOfBoundsException("Index out of bounds start="
+                        + start + " end=" + end);
+            }
+            byte[] bs = new byte[end - start];
+            for (int i = start, j = 0; i < end; i++, j++) {
+                bs[j] = buf.get(i);
+            }
+
+            return new ByteBufferAsCharSequence(ByteBuffer.wrap(bs));
+        }
     }
 
 

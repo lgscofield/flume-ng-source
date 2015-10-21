@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,28 +45,32 @@ import java.util.List;
  */
 public class Cursor {
     private static final Logger logger = LoggerFactory.getLogger(Cursor.class);
-
-    private SystemClock systemClock = new SystemClock();
-    private Long lastPushToChannel = systemClock.currentTimeMillis();
-
-    // For following a file name
+    /**
+     * For following a file name
+     */
     final File file;
-    // For buffering reads
+    /**
+     * For buffering reads
+     */
     final ByteBuffer buf = ByteBuffer.allocateDirect(Short.MAX_VALUE);
-    // For closing file handles and getting FileChannels
+    /**
+     * For closing file handles and getting FileChannels
+     */
     RandomAccessFile raf = null;
-    // For reading data
+    /**
+     * For reading data
+     */
     FileChannel in = null;
-
     long lastFileMod;
     long lastChannelPos;
     long lastChannelSize;
     int readFailures;
     String charEncode;
-
     AbstractSource source;
     SourceCounter sourceCounter;
     int batchSize;
+    private SystemClock systemClock = new SystemClock();
+    private Long lastPushToChannel = systemClock.currentTimeMillis();
 
 
     public Cursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize) {
@@ -127,8 +131,6 @@ public class Cursor {
 
             try {
                 logger.debug("flush method line info >>>>> " + new String(body, charEncode));
-
-
                 sourceCounter.incrementAppendBatchReceivedCount();
                 Event event = EventBuilder.withBody(new String(body, charEncode).getBytes());
                 source.getChannelProcessor().processEvent(event);
@@ -211,9 +213,7 @@ public class Cursor {
             lastChannelPos = in.position();
             lastChannelSize = in.size();
 
-            logger.debug("Tail '" + file + "': opened last mod=" + lastFileMod
-                    + " lastChannelPos=" + lastChannelPos + " lastChannelSize="
-                    + lastChannelSize);
+            logger.debug("Tail '" + file + "': opened last mod=" + lastFileMod + " lastChannelPos=" + lastChannelPos + " lastChannelSize=" + lastChannelSize);
             return true;
         } catch (FileNotFoundException fnfe) {
             // possible because of file system race, we can recover from this.
@@ -367,16 +367,14 @@ public class Cursor {
             logger.debug(e.getMessage(), e);
             in = null;
             readFailures++;
-
-      /*
-       * Back off on retries after 3 failures so we don't burn cycles. Note that
-       * this can exacerbate the race condition illustrated above where a file
-       * is truncated, created, written to, and truncated / removed while we're
-       * sleeping.
-       */
+            /**
+             * Back off on retries after 3 failures so we don't burn cycles. Note that
+             * this can exacerbate the race condition illustrated above where a file
+             * is truncated, created, written to, and truncated / removed while we're
+             * sleeping.
+             */
             if (readFailures > 3) {
-                logger.warn("Encountered " + readFailures + " failures on "
-                        + file.getAbsolutePath() + " - sleeping");
+                logger.warn("Encountered " + readFailures + " failures on " + file.getAbsolutePath() + " - sleeping");
                 return false;
             }
         }
@@ -422,9 +420,7 @@ public class Cursor {
 
         }
 
-        logger.debug("tail " + file + ": last read position " + lastChannelPos
-                + ", madeProgress: " + madeProgress);
-
+        logger.debug("tail " + file + ": last read position " + lastChannelPos + ", madeProgress: " + madeProgress);
         return madeProgress;
     }
 }
