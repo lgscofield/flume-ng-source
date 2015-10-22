@@ -17,6 +17,7 @@
  */
 package com.source.tailDir;
 
+import com.google.gson.JsonObject;
 import org.apache.flume.Event;
 import org.apache.flume.SystemClock;
 import org.apache.flume.event.EventBuilder;
@@ -132,6 +133,11 @@ public class Cursor {
             try {
                 logger.debug("flush method line info >>>>> " + new String(body, charEncode));
                 sourceCounter.incrementAppendBatchReceivedCount();
+                // String bodyStr = new String(body, charEncode);
+                // JsonObject jo = new JsonObject();
+                // jo.getAsJsonObject(bodyStr);
+
+
                 Event event = EventBuilder.withBody(new String(body, charEncode).getBytes());
                 source.getChannelProcessor().processEvent(event);
                 sourceCounter.incrementAppendBatchAcceptedCount();
@@ -217,8 +223,7 @@ public class Cursor {
             return true;
         } catch (FileNotFoundException fnfe) {
             // possible because of file system race, we can recover from this.
-            logger.debug("Tail '" + file
-                    + "': a file existed then disappeared, odd but continue");
+            logger.debug("Tail '" + file + "': a file existed then disappeared, odd but continue");
             return false;
         }
     }

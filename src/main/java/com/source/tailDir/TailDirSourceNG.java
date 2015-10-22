@@ -53,7 +53,6 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
 
     @Override
     public void configure(Context context) {
-
         this.monitorDirPath = context.getString("monitorPath");
         this.fileEncode = context.getString("fileEncode", "UTF-8");
         this.fileRegex = context.getString("fileRegex", ".*");
@@ -111,8 +110,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 if (delimRegex == null) {
                     if (startFromEnd && !dirChecked) {
                         // init cursor positions on first dir check when startFromEnd is set to true
-                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f
-                                .lastModified(), fileEncode, batchSize);
+                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize);
                     } else {
                         c = new Cursor(source, sourceCounter, f, fileEncode, batchSize);
                     }

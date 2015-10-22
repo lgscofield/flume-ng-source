@@ -69,10 +69,8 @@ public class TailSourceNG extends AbstractSource implements Configurable, EventD
         Cursor c;
         if (delimRegex == null) {
             if (startFromEnd) {
-                // init cursor positions on first dir check when startFromEnd is set
-                // to true
-                c = new Cursor(this, sourceCounter, f, f.length(), f.length(), f
-                        .lastModified(), fileEncode, batchSize);
+                // init cursor positions on first dir check when startFromEnd is set to true
+                c = new Cursor(this, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize);
             } else {
                 c = new Cursor(this, sourceCounter, f, fileEncode, batchSize);
             }
