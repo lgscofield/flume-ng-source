@@ -78,8 +78,7 @@ public class TailSource {
     private TailThread thd = null;
 
     /**
-     * This creates an empty tail source. It expects something else to add cursors
-     * to it
+     * This creates an empty tail source. It expects something else to add cursors to it
      */
     public TailSource(long waitTime) {
         this.sleepTime = waitTime;
@@ -94,13 +93,11 @@ public class TailSource {
         if (thd == null) {
             cursors.add(cursor);
             LOG.debug("Unstarted Tail has added cursor: " + cursor.file.getName());
-
         } else {
             synchronized (newCursors) {
                 newCursors.add(cursor);
             }
-            LOG.debug("Tail added new cursor to new cursor list: "
-                    + cursor.file.getName());
+            LOG.debug("Tail added new cursor to new cursor list: " + cursor.file.getName());
         }
 
     }
@@ -113,7 +110,6 @@ public class TailSource {
         if (thd == null) {
             cursors.remove(cursor);
         } else {
-
             synchronized (rmCursors) {
                 rmCursors.add(cursor);
             }

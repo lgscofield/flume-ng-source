@@ -18,6 +18,7 @@
 package com.source.tailDir;
 
 import com.google.common.base.Preconditions;
+import com.source.tailDir.db.JdbcUtils;
 import com.source.tailDir.dirwatchdog.DirChangeHandler;
 import com.source.tailDir.dirwatchdog.DirWatcher;
 import com.source.tailDir.dirwatchdog.RegexFileFilter;
@@ -30,6 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,8 +85,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
         sourceCounter.start();
         logger.info("TailDir source started");
     }
-
-
+	
     @Override
     public void stop() {
         tail.close();
@@ -110,17 +114,17 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 if (delimRegex == null) {
                     if (startFromEnd && !dirChecked) {
                         // init cursor positions on first dir check when startFromEnd is set to true
-                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize);
+                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize, appDataMap);
                     } else {
-                        c = new Cursor(source, sourceCounter, f, fileEncode, batchSize);
+                        c = new Cursor(source, sourceCounter, f, fileEncode, batchSize, appDataMap);
                     }
                 } else {
                     // special delimiter modes
                     if (startFromEnd && !dirChecked) {
                         // init cursor positions on first dir check when startFromEnd is set to true
-                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, f.length(), f.length(), f.lastModified(), delimRegex, delimMode);
+                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, f.length(), f.length(), f.lastModified(), delimRegex, delimMode, appDataMap);
                     } else {
-                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, delimRegex, delimMode);
+                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, delimRegex, delimMode, appDataMap);
                     }
                 }
 

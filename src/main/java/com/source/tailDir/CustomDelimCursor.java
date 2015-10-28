@@ -30,6 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,6 +49,20 @@ public class CustomDelimCursor extends Cursor {
 
     CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, String regex, String delimModeStr) {
         super(source, sourceCounter, f, charEncode, batchSize);
+        this.pat = Pattern.compile(regex);
+        this.delimMode = extractDelim(delimModeStr);
+    }
+
+    CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, long lastReadOffset, long lastFileLen, long lastMod, String regex, String delimModeStr,  Map<String, String> appData) {
+        // super(source, sourceCounter, f, lastReadOffset, lastFileLen, lastMod, charEncode, batchSize);
+        super(source, sourceCounter, f, lastReadOffset, lastFileLen, lastMod, charEncode, batchSize, appData);
+        this.pat = Pattern.compile(regex);
+        this.delimMode = extractDelim(delimModeStr);
+    }
+
+    CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, String regex, String delimModeStr, Map<String, String> appData) {
+        // super(source, sourceCounter, f, charEncode, batchSize);
+        super(source, sourceCounter, f, charEncode, batchSize, appData);
         this.pat = Pattern.compile(regex);
         this.delimMode = extractDelim(delimModeStr);
     }

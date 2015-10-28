@@ -17,7 +17,6 @@
  */
 package com.source.tailDir;
 
-import com.google.gson.JsonObject;
 import org.apache.flume.Event;
 import org.apache.flume.SystemClock;
 import org.apache.flume.event.EventBuilder;
@@ -31,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * To support multiple tail readers, we have a Cursor for each file name
@@ -72,6 +72,7 @@ public class Cursor {
     int batchSize;
     private SystemClock systemClock = new SystemClock();
     private Long lastPushToChannel = systemClock.currentTimeMillis();
+    private Map<String, String> appData;
 
 
     public Cursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize) {
@@ -89,6 +90,24 @@ public class Cursor {
         this.lastFileMod = lastMod;
         this.readFailures = 0;
         this.charEncode = charEncode;
+    }
+
+    public Cursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, Map<String, String> appData) {
+        this(source, sourceCounter, f, 0, 0, 0, charEncode, batchSize, appData);
+    }
+
+    Cursor(AbstractSource source, SourceCounter sourceCounter, File f, long lastReadOffset,
+           long lastFileLen, long lastMod, String charEncode, int batchSize, Map<String, String> appData) {
+        this.source = source;
+        this.sourceCounter = sourceCounter;
+        this.batchSize = batchSize;
+        this.file = f;
+        this.lastChannelPos = lastReadOffset;
+        this.lastChannelSize = lastFileLen;
+        this.lastFileMod = lastMod;
+        this.readFailures = 0;
+        this.charEncode = charEncode;
+        this.appData = appData;
     }
 
 
@@ -133,9 +152,6 @@ public class Cursor {
             try {
                 logger.debug("flush method line info >>>>> " + new String(body, charEncode));
                 sourceCounter.incrementAppendBatchReceivedCount();
-                // String bodyStr = new String(body, charEncode);
-                // JsonObject jo = new JsonObject();
-                // jo.getAsJsonObject(bodyStr);
 
 
                 Event event = EventBuilder.withBody(new String(body, charEncode).getBytes());
