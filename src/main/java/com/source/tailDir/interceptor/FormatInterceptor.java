@@ -75,7 +75,6 @@ public class FormatInterceptor implements Interceptor {
 
     @Override
     public Event intercept(Event event) {
-        LOGGER.debug("FormatInterceptor.intercept().event: {}", event);
         String body = new String(event.getBody(), Charset.forName("UTF-8"));
         JSONObject jsonObject;
         try {
@@ -99,7 +98,6 @@ public class FormatInterceptor implements Interceptor {
         jsonObject.put("productid", pcIds[0]);
         jsonObject.put("channelid", pcIds[1]);
 
-        LOGGER.error("jsonObject.toString(): {}", jsonObject.toString());
         return EventBuilder.withBody(jsonObject.toString(), Charset.forName("UTF-8"));
     }
 
@@ -112,7 +110,6 @@ public class FormatInterceptor implements Interceptor {
                 intercepted.add(interceptedEvent);
             }
         }
-        LOGGER.error("FormatInterceptor.intercept().intercepted: {}, intercepted.size(): {}", intercepted, intercepted.size());
         return intercepted;
     }
 
