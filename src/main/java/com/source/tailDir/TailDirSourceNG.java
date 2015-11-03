@@ -114,17 +114,17 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
                 if (delimRegex == null) {
                     if (startFromEnd && !dirChecked) {
                         // init cursor positions on first dir check when startFromEnd is set to true
-                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize, appDataMap);
+                        c = new Cursor(source, sourceCounter, f, f.length(), f.length(), f.lastModified(), fileEncode, batchSize);
                     } else {
-                        c = new Cursor(source, sourceCounter, f, fileEncode, batchSize, appDataMap);
+                        c = new Cursor(source, sourceCounter, f, fileEncode, batchSize);
                     }
                 } else {
                     // special delimiter modes
                     if (startFromEnd && !dirChecked) {
                         // init cursor positions on first dir check when startFromEnd is set to true
-                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, f.length(), f.length(), f.lastModified(), delimRegex, delimMode, appDataMap);
+                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, f.length(), f.length(), f.lastModified(), delimRegex, delimMode);
                     } else {
-                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, delimRegex, delimMode, appDataMap);
+                        c = new CustomDelimCursor(source, sourceCounter, f, fileEncode, batchSize, delimRegex, delimMode);
                     }
                 }
 

@@ -72,8 +72,6 @@ public class Cursor {
     int batchSize;
     private SystemClock systemClock = new SystemClock();
     private Long lastPushToChannel = systemClock.currentTimeMillis();
-    private Map<String, String> appData;
-
 
     public Cursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize) {
         this(source, sourceCounter, f, 0, 0, 0, charEncode, batchSize);
@@ -91,25 +89,6 @@ public class Cursor {
         this.readFailures = 0;
         this.charEncode = charEncode;
     }
-
-    public Cursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, Map<String, String> appData) {
-        this(source, sourceCounter, f, 0, 0, 0, charEncode, batchSize, appData);
-    }
-
-    Cursor(AbstractSource source, SourceCounter sourceCounter, File f, long lastReadOffset,
-           long lastFileLen, long lastMod, String charEncode, int batchSize, Map<String, String> appData) {
-        this.source = source;
-        this.sourceCounter = sourceCounter;
-        this.batchSize = batchSize;
-        this.file = f;
-        this.lastChannelPos = lastReadOffset;
-        this.lastChannelSize = lastFileLen;
-        this.lastFileMod = lastMod;
-        this.readFailures = 0;
-        this.charEncode = charEncode;
-        this.appData = appData;
-    }
-
 
     /**
      * Setup the initial cursor position.

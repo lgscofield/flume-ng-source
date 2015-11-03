@@ -53,20 +53,6 @@ public class CustomDelimCursor extends Cursor {
         this.delimMode = extractDelim(delimModeStr);
     }
 
-    CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, long lastReadOffset, long lastFileLen, long lastMod, String regex, String delimModeStr,  Map<String, String> appData) {
-        // super(source, sourceCounter, f, lastReadOffset, lastFileLen, lastMod, charEncode, batchSize);
-        super(source, sourceCounter, f, lastReadOffset, lastFileLen, lastMod, charEncode, batchSize, appData);
-        this.pat = Pattern.compile(regex);
-        this.delimMode = extractDelim(delimModeStr);
-    }
-
-    CustomDelimCursor(AbstractSource source, SourceCounter sourceCounter, File f, String charEncode, int batchSize, String regex, String delimModeStr, Map<String, String> appData) {
-        // super(source, sourceCounter, f, charEncode, batchSize);
-        super(source, sourceCounter, f, charEncode, batchSize, appData);
-        this.pat = Pattern.compile(regex);
-        this.delimMode = extractDelim(delimModeStr);
-    }
-
     private DelimMode extractDelim(String delimModeStr) {
         DelimMode delimMode = DelimMode.EXCLUDE; // default to exclude mode
         if (delimModeStr != null) {
