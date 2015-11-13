@@ -17,8 +17,14 @@
  */
 package com.source.tailDir.dirwatchdog;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.regex.Pattern;
 
 /**
@@ -28,21 +34,26 @@ import java.util.regex.Pattern;
  * This class is not thread safe because pattern is not thread safe.
  */
 public class RegexFileFilter implements FileFilter {
-    Pattern p; // not thread safe
+    // public static final Logger logger = LoggerFactory.getLogger(RegexFileFilter.class);
+    private Pattern pattern; // not thread safe
 
     public RegexFileFilter(String regex) {
-        this.p = Pattern.compile(regex);
-    }
-
-    public static void main(String[] args) {
-        Pattern ignorePattern = Pattern.compile("[a-z]{0,5}-\\d{0,2}\\..*");
-        boolean t = ignorePattern.matcher("group-1.2014-12-17").matches();
-//         t = ignorePattern.matcher("group-1.").matches();
-        System.out.println(t);
+        this.pattern = Pattern.compile(regex);
     }
 
     @Override
-    public boolean accept(File pathname) {
-        return p.matcher(pathname.getName()).matches();
+    public boolean accept(File candidate) {
+        String fileName = candidate.getName();
+        if ((candidate.isDirectory()) || (fileName.startsWith("."))) {
+            return false;
+        }
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+
+        String formatStr = new SimpleDateFormat("yyyyMMdd").format(date);
+        boolean isPattern = pattern.matcher(candidate.getName()).matches();
+        boolean isContains = fileName.contains(formatStr);
+        // logger.info("file: {}, & isPattern: {}, & isContains: {}", fileName, isPattern, isContains);
+        return isPattern && isContains;
     }
 }

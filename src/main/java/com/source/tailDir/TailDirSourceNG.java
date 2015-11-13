@@ -18,7 +18,6 @@
 package com.source.tailDir;
 
 import com.google.common.base.Preconditions;
-import com.source.tailDir.db.JdbcUtils;
 import com.source.tailDir.dirwatchdog.DirChangeHandler;
 import com.source.tailDir.dirwatchdog.DirWatcher;
 import com.source.tailDir.dirwatchdog.RegexFileFilter;
@@ -31,12 +30,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.FileFilter;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * This source tails all the file in a directory that match a specified regular
@@ -85,7 +85,7 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
         sourceCounter.start();
         logger.info("TailDir source started");
     }
-	
+
     @Override
     public void stop() {
         tail.close();
@@ -98,6 +98,24 @@ public class TailDirSourceNG extends AbstractSource implements Configurable, Eve
 
     private DirWatcher createWatcher(File dir, final String regex, final TailDirSourceNG source, final SourceCounter sourceCounter) {
         // 250 ms between checks
+        // FileFilter fileFilter = new FileFilter() {
+        //     @Override
+        //     public boolean accept(File pathname) {
+        //         String fileName = pathname.getName();
+        //         if ((pathname.isDirectory()) || (fileName.startsWith("."))) {
+        //             return false;
+        //         }
+        //         Calendar calendar = Calendar.getInstance();
+        //         Date date = calendar.getTime();
+        //         String formatStr = new SimpleDateFormat("yyyyMMdd").format(date);
+        //         if (!fileName.contains(formatStr)) {
+        //             return false;
+        //         }
+        //         Pattern pattern = Pattern.compile(regex);
+        //         return pattern.matcher(pathname.getName()).matches();
+        //     }
+        // };
+        // DirWatcher watcher = new DirWatcher(dir, fileFilter, 250);
         DirWatcher watcher = new DirWatcher(dir, new RegexFileFilter(regex), 250);
         watcher.addHandler(new DirChangeHandler() {
             Map<String, Cursor> curmap = new HashMap<String, Cursor>();
