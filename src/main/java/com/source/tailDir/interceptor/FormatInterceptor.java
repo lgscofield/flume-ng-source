@@ -8,6 +8,7 @@ import com.source.tailDir.json.JSONException;
 import com.source.tailDir.json.JSONObject;
 import com.source.tailDir.util.DESUtil;
 import com.source.tailDir.util.IPLocation;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -21,24 +22,33 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
+ * Interceptor for event rebuild.
+ * <p/>
  * Created by ibm on 2015/10/23.
  */
 public class FormatInterceptor implements Interceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FormatInterceptor.class);
 
+    private String dbPrefix;
+
     private Map<String, String> appDataMap = new HashMap<String, String>();
+
+    private List<String> blacklist = new ArrayList<String>();
 
     private IPLocation ipLocation;
 
     @Override
     public void initialize() {
-        initAppData();
-        initLocation();
+        this.dbPrefix = JdbcUtils.getDbPrefix().trim();
+        this.initAppData();
+        this.initLocation();
     }
 
     /**
@@ -49,7 +59,6 @@ public class FormatInterceptor implements Interceptor {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
-            final String dbPrefix = JdbcUtils.getDbPrefix().trim();
             final String sql = "select productkey, product_id, channel_id from " + dbPrefix + "channel_product a left join " + dbPrefix + "product b on a.product_id = b.id where b.active = 1";
             preparedStatement = connection.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
@@ -80,6 +89,57 @@ public class FormatInterceptor implements Interceptor {
         }
     }
 
+    private String queryProductInfo(String appKey) {
+        if (StringUtils.isEmpty(appKey) || blacklist.contains(appKey)) {
+            return null;
+        }
+        String tempAppKey = appKey.trim();
+        final String sql = "select productkey, product_id, channel_id from " + dbPrefix + "channel_product a left join " + dbPrefix + "product b on a.product_id = b.id where b.active = 1 And a.productkey = " + tempAppKey;
+        Connection connection = JdbcUtils.getConnection();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+
+            int count = 0;
+            while (resultSet.next()) {
+                count++;
+                String productKey = resultSet.getString("productkey");
+                String productId = resultSet.getString("product_id");
+                String channelId = resultSet.getString("channel_id");
+                String info = productId + "@" + channelId;
+                appDataMap.put(productKey, info);
+            }
+            if (count > 1) {
+                return null;
+            }
+            return appDataMap.get(tempAppKey);
+        } catch (SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+            JdbcUtils.closeConnection();
+        }
+        if (appDataMap.isEmpty()) {
+            blacklist.add(tempAppKey);
+        }
+        return null;
+    }
+
     /**
      * 初始化IP LOCATION
      */
@@ -101,16 +161,19 @@ public class FormatInterceptor implements Interceptor {
         String deviceid = jsonObject.getString("deviceid");
 
         if (null == deviceid) {
+            LOGGER.error("The deviceId is invalid!");
             return null;
         }
         // productId and chanelId
-        String pcId = appDataMap.get(key);
+        String pcId = StringUtils.isEmpty(appDataMap.get(key)) ? queryProductInfo(key) : appDataMap.get(key);
         if (null == pcId) {
+            LOGGER.error("The appKey: {} has not invalid key!", key);
             return null;
         }
         String[] pcIds = pcId.split("@");
 
         if (pcIds.length != 2) {
+            LOGGER.error("The productId or channelId is invalid!");
             return null;
         }
         jsonObject.put("productid", pcIds[0]);
@@ -137,7 +200,7 @@ public class FormatInterceptor implements Interceptor {
     }
 
     public static void main(String[] args) {
-        String body = "2015-11-13 12:24:26||192.168.1.107||KFiO2S+ERu5tMO3oayRDFq77Bj3eqC66Mspk5tDt3mhc6r9Rrdie/mMAqQ7g4AE1D8Hs3LIjIWWKppR7JDzlT+q5faByk9lOfakCGxKrdhXoUtzh9PtSVLBQQDVEK64UTjzdcVJ+UmROKtR9EL50jKW7gU/2skVjurrlSdEMx1bqhw2cLe/vesvRXuaqnasbo5R9DBe+r5jqhw2cLe/vesYjZSZqtj856SmIyltA7mCxrZNUiP3VH9gTsJLKuupsNoBzfrcdChYa8WavQeuax984MFfcHlW63PT5gls1P2fV62XLqcioKdnJRLP/atyKR8LQ+6ABGyViwx7S//XzGHOwzbDntP1j9YERlS1L4QS5VTAOownqNmLDHtL/9fMYsUCYhS2b/9SjHP2cr7yFLSEfT8Zy+BtZyLx66zN0Vs9XUmekg+nZoPgTNC8JCiECiWqGR7NktEkTzVM/nbT8GWnF8Hizle/290CDgRs9zbtOPN1xUn5SZLAtEl1KCLPBjyWtSPQtzUbqTXubRuTVVYqhDjR0gomMCPGg+2Y1+AJklS719RyWWl+JltDgYAW0rklLcATsKQIjuVorIPBFrzmr820RbvlDiReCJpYZ4pUwIXdYfeZ4L9ACe+Z5LbL7g6Qm9FwIPsFiwx7S//XzGHRAAUh06Vjd2rZqzeLsJWgBInX9eRVwZtzpwaZuZnSU/H4gknTbWr7RhuRiJKkpplN6W42d8+DgVTOwlo25LVOQeOGApf/f2qZ/umYZe7wuz5sZRUqG4evvRBZMD00KP036b2S5sk+fGHXbEvMtFKD9bvCsKGALm7UjDDNk8Z2C";
+        String body = "2015-11-16 12:03:17||112.17.239.174||content=%7B%22data%22%3A%5B%7B%22platform%22%3A%22android%22%2C%22session_id%22%3A%229b0eb6f3b329534f7c8ec177e50ddebf%22%2C%22cellid%22%3A%2282763588%22%2C%22ismobiledevice%22%3Atrue%2C%22havewifi%22%3Afalse%2C%22appkey%22%3A%2272745e80fd1f11e493f800163e0240bd%22%2C%22resolution%22%3A%22480x854%22%2C%22network%22%3A%22cmnet%22%2C%22lac%22%3A%2255381%22%2C%22version%22%3A%223.1.0%22%2C%22os_version%22%3A%224.3%22%2C%22deviceid%22%3A%22865019027480965%22%2C%22havebt%22%3Atrue%2C%22phonetype%22%3A1%2C%22havegps%22%3A%22false%22%2C%22modulename%22%3A%22A788t%22%2C%22time%22%3A%222015-11-16+12%3A03%3A14%22%2C%22useridentifier%22%3A%22d41d8cd98f00b204e9800998ecf8427e%22%2C%22wifimac%22%3A%2270%3A72%3A0d%3A2a%3A6a%3A40%22%2C%22devicename%22%3A%22LENOVO+Lenovo+A788t%22%2C%22mccmnc%22%3A%2246000%22%2C%22imsi%22%3A%22460026679432736%22%2C%22language%22%3A%22zh%22%2C%22havegravity%22%3Atrue%7D%5D%7D";
 
         List<Event> events = new ArrayList<Event>();
         try {
@@ -203,10 +266,7 @@ public class FormatInterceptor implements Interceptor {
     }
 
     private static boolean isEncrypt(String body) {
-        if (body.startsWith("content=")) {
-            return false;
-        }
-        return true;
+        return !body.startsWith("content=");
     }
 
     @Override
